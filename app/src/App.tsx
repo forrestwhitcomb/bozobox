@@ -39,7 +39,7 @@ export default function App() {
           <Inspector shape={selectedShape} dispatch={dispatch} />
           <button
             className="view-components-btn"
-            onClick={() => window.open('http://localhost:3131/component-library', '_blank')}
+            onClick={() => window.open('/component-library.html', '_blank')}
           >
             View components
           </button>
