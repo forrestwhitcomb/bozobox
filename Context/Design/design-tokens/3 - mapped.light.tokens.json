@@ -1,0 +1,310 @@
+{
+  "surface": {
+    "primary": {
+      "brand-red": {
+        "$type": "color",
+        "$value": "{red.500}"
+      },
+      "canvas": {
+        "$type": "color",
+        "$value": "{neutral.100}"
+      },
+      "darker": {
+        "$type": "color",
+        "$value": "{neutral.900}"
+      },
+      "Neutral": {
+        "$type": "color",
+        "$value": "{neutral.300}"
+      },
+      "light": {
+        "$type": "color",
+        "$value": "{neutral.200}"
+      },
+      "lighter": {
+        "$type": "color",
+        "$value": "{neutral.0}"
+      },
+      "bottom-sheet": {
+        "$type": "color",
+        "$value": "{neutral.0}"
+      },
+      "soft-contrast": {
+        "$type": "color",
+        "$value": "{neutral.0}"
+      },
+      "error": {
+        "$type": "color",
+        "$value": "{red.500}"
+      },
+      "error-light": {
+        "$type": "color",
+        "$value": "{red.200}"
+      },
+      "warning": {
+        "$type": "color",
+        "$value": "{warning.400}"
+      },
+      "warning-light": {
+        "$type": "color",
+        "$value": "{warning.200}"
+      },
+      "success-strong": {
+        "$type": "color",
+        "$value": "{success.500}"
+      },
+      "success-light": {
+        "$type": "color",
+        "$value": "{success.200}"
+      },
+      "dark-constant": {
+        "$type": "color",
+        "$value": "{neutral.900}"
+      },
+      "transparent": {
+        "$type": "color",
+        "$value": "#fafafc00"
+      },
+      "overlay-background": {
+        "$type": "color",
+        "$value": "#11111166"
+      },
+      "darker-50": {
+        "$type": "color",
+        "$value": "#11111180"
+      },
+      "darker-60": {
+        "$type": "color",
+        "$value": "#11111199"
+      }
+    },
+    "button": {
+      "primary": {
+        "$type": "color",
+        "$value": "{color.brand.red}"
+      },
+      "secondary-black": {
+        "$type": "color",
+        "$value": "{neutral.900}"
+      },
+      "secondary-white": {
+        "$type": "color",
+        "$value": "{neutral.0}"
+      },
+      "secondary-grey": {
+        "$type": "color",
+        "$value": "{neutral.200}"
+      },
+      "pressed": {
+        "$type": "color",
+        "$value": "{color.red.50}"
+      },
+      "disabled": {
+        "$type": "color",
+        "$value": "{neutral.400}"
+      },
+      "green": {
+        "$type": "color",
+        "$value": "{success.500}"
+      }
+    },
+    "label": {
+      "purple": {
+        "$type": "color",
+        "$value": "{color.semantic.purple}"
+      },
+      "black": {
+        "$type": "color",
+        "$value": "{neutral.800}"
+      }
+    },
+    "home": {
+      "calling": {
+        "$type": "color",
+        "$value": "#edeadd"
+      },
+      "mtu": {
+        "$type": "color",
+        "$value": "#dae2f4"
+      }
+    },
+    "home-card": {
+      "600": {
+        "$type": "color",
+        "$value": "#737378"
+      }
+    }
+  },
+  "content": {
+    "primary": {
+      "$type": "color",
+      "$value": "{neutral.800}"
+    },
+    "secondary": {
+      "$type": "color",
+      "$value": "{neutral.600}"
+    },
+    "tertiary": {
+      "$type": "color",
+      "$value": "{neutral.400}"
+    },
+    "brand": {
+      "$type": "color",
+      "$value": "{color.brand.red}"
+    },
+    "ligthest": {
+      "$type": "color",
+      "$value": "{neutral.0}"
+    },
+    "darkest": {
+      "$type": "color",
+      "$value": "{neutral.900}"
+    },
+    "white-constant": {
+      "$type": "color",
+      "$value": "{neutral.0}"
+    },
+    "black-constant": {
+      "$type": "color",
+      "$value": "{neutral.900}"
+    },
+    "success": {
+      "$type": "color",
+      "$value": "{success.400}"
+    },
+    "warning": {
+      "$type": "color",
+      "$value": "{warning.400}"
+    },
+    "primary-opacity-50": {
+      "$type": "color",
+      "$value": "#11111180"
+    }
+  },
+  "text": {
+    "600": {
+      "$type": "color",
+      "$value": "#737378"
+    },
+    "primary": {
+      "$type": "color",
+      "$value": "{content.primary}"
+    },
+    "secondary": {
+      "$type": "color",
+      "$value": "{neutral.600}"
+    },
+    "tertiary": {
+      "$type": "color",
+      "$value": "{neutral.400}"
+    },
+    "lightest": {
+      "$type": "color",
+      "$value": "{content.ligthest}"
+    },
+    "white-constant": {
+      "$type": "color",
+      "$value": "{content.white-constant}"
+    },
+    "black-constant": {
+      "$type": "color",
+      "$value": "{content.black-constant}"
+    },
+    "homecard-meta": {
+      "$type": "color",
+      "$value": "#505055"
+    },
+    "button-text": {
+      "$type": "color",
+      "$value": "{content.brand}"
+    },
+    "brand": {
+      "$type": "color",
+      "$value": "{content.brand}"
+    },
+    "success": {
+      "$type": "color",
+      "$value": "{content.success}"
+    },
+    "warning": {
+      "$type": "color",
+      "$value": "{content.warning}"
+    },
+    "error": {
+      "$type": "color",
+      "$value": "{red.500}"
+    },
+    "primary-opacity-50": {
+      "$type": "color",
+      "$value": "{content.primary-opacity-50}"
+    }
+  },
+  "border": {
+    "primary": {
+      "$type": "color",
+      "$value": "{content.primary}"
+    },
+    "secondary": {
+      "$type": "color",
+      "$value": "{content.secondary}"
+    },
+    "tertiary": {
+      "$type": "color",
+      "$value": "{neutral.300}"
+    },
+    "success": {
+      "$type": "color",
+      "$value": "{content.success}"
+    },
+    "warning": {
+      "$type": "color",
+      "$value": "{content.warning}"
+    },
+    "error": {
+      "$type": "color",
+      "$value": "{red.500}"
+    },
+    "red": {
+      "$type": "color",
+      "$value": "{content.brand}"
+    }
+  },
+  "icon": {
+    "primary": {
+      "$type": "color",
+      "$value": "{content.primary}"
+    },
+    "secondary": {
+      "$type": "color",
+      "$value": "{content.secondary}"
+    },
+    "tertiary": {
+      "$type": "color",
+      "$value": "{content.tertiary}"
+    },
+    "ligthest": {
+      "$type": "color",
+      "$value": "{content.ligthest}"
+    },
+    "white-constant": {
+      "$type": "color",
+      "$value": "{content.white-constant}"
+    },
+    "brand": {
+      "$type": "color",
+      "$value": "{content.brand}"
+    },
+    "warning": {
+      "$type": "color",
+      "$value": "{content.warning}"
+    },
+    "success": {
+      "$type": "color",
+      "$value": "{content.success}"
+    }
+  },
+  "opacity-lightbox": {
+    "$type": "dimension",
+    "$value": "{opacity.40}"
+  }
+}

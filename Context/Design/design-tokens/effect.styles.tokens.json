@@ -1,0 +1,38 @@
+{
+  "elevation-1": {
+    "$type": "shadow",
+    "$value": [
+      {
+        "offsetX": "4px",
+        "offsetY": "4px",
+        "blur": "10px",
+        "spread": "2px",
+        "color": "#32325d05"
+      }
+    ]
+  },
+  "elevation-2": {
+    "$type": "shadow",
+    "$value": [
+      {
+        "offsetX": "0px",
+        "offsetY": "14px",
+        "blur": "20px",
+        "spread": "4px",
+        "color": "#32325d0f"
+      }
+    ]
+  },
+  "elevation-3": {
+    "$type": "shadow",
+    "$value": [
+      {
+        "offsetX": "0px",
+        "offsetY": "12px",
+        "blur": "28px",
+        "spread": "0px",
+        "color": "#32325d2e"
+      }
+    ]
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "name": "Design Tokens",
+  "collections": {
+    "1 - primitives": {
+      "modes": {
+        "Mode 1": [
+          "1 - primitives.Mode 1.tokens.json"
+        ]
+      }
+    },
+    "2 - alias": {
+      "modes": {
+        "default": [
+          "2 - alias.default.tokens.json"
+        ]
+      }
+    },
+    "3 - mapped": {
+      "modes": {
+        "light": [
+          "3 - mapped.light.tokens.json"
+        ],
+        "dark": [
+          "3 - mapped.dark.tokens.json"
+        ]
+      }
+    }
+  },
+  "styles": {
+    "text": [
+      "text.styles.tokens.json"
+    ],
+    "effect": [
+      "effect.styles.tokens.json"
+    ],
+    "grid": [
+      "grid.styles.tokens.json"
+    ]
+  }
+}

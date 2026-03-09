@@ -1,0 +1,106 @@
+{
+  "neutral": {
+    "0": {
+      "$type": "color",
+      "$value": "{color.grey.0}"
+    },
+    "100": {
+      "$type": "color",
+      "$value": "{color.grey.100}"
+    },
+    "200": {
+      "$type": "color",
+      "$value": "{color.grey.200}"
+    },
+    "300": {
+      "$type": "color",
+      "$value": "{color.grey.300}"
+    },
+    "400": {
+      "$type": "color",
+      "$value": "{color.grey.400}"
+    },
+    "500": {
+      "$type": "color",
+      "$value": "{color.grey.500}"
+    },
+    "600": {
+      "$type": "color",
+      "$value": "{color.grey.600}"
+    },
+    "700": {
+      "$type": "color",
+      "$value": "{color.grey.700}"
+    },
+    "800": {
+      "$type": "color",
+      "$value": "{color.grey.800}"
+    },
+    "900": {
+      "$type": "color",
+      "$value": "{color.grey.900}"
+    }
+  },
+  "red": {
+    "200": {
+      "$type": "color",
+      "$value": "{color.red.10}"
+    },
+    "300": {
+      "$type": "color",
+      "$value": "{color.red.20}"
+    },
+    "400": {
+      "$type": "color",
+      "$value": "{color.red.30}"
+    },
+    "500": {
+      "$type": "color",
+      "$value": "{color.red.rebtel-red}"
+    },
+    "600": {
+      "$type": "color",
+      "$value": "{color.red.40}"
+    },
+    "700": {
+      "$type": "color",
+      "$value": "{color.red.50}"
+    },
+    "800": {
+      "$type": "color",
+      "$value": "{color.red.60}"
+    }
+  },
+  "success": {
+    "200": {
+      "$type": "color",
+      "$value": "{color.semantic.green-lighter}"
+    },
+    "300": {
+      "$type": "color",
+      "$value": "{color.semantic.green-light}"
+    },
+    "400": {
+      "$type": "color",
+      "$value": "{color.semantic.green}"
+    },
+    "500": {
+      "$type": "color",
+      "$value": "{color.semantic.green-darker}"
+    }
+  },
+  "warning": {
+    "200": {
+      "$type": "color",
+      "$value": "{color.semantic.warning-lighter}"
+    },
+    "300": {
+      "$type": "color",
+      "$value": "{color.semantic.warning-light}"
+    },
+    "400": {
+      "$type": "color",
+      "$value": "{color.semantic.warning}"
+    }
+  }
+}

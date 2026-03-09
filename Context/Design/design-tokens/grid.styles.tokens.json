@@ -1,0 +1,22 @@
+{
+  "foundation": {
+    "$type": "grid",
+    "$value": [
+      {
+        "pattern": "columns",
+        "visible": true,
+        "alignment": "stretch",
+        "color": "#ff00001a",
+        "gutterSize": "{spacing.md}",
+        "count": 4,
+        "offset": "{spacing.md}"
+      },
+      {
+        "pattern": "grid",
+        "visible": true,
+        "color": "#ff00001a",
+        "sectionSize": "4px"
+      }
+    ]
+  }
+}

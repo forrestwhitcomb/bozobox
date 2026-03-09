@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rebtel Mini Design System</title>
+  <link rel="stylesheet" href="design-system.css">
+  <style>
+    /* Library page layout only — not part of the design system */
+    body { padding: 64px; }
+    .ds-section { margin-bottom: 80px; }
+    .ds-section__label {
+      font-family: var(--font-body);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--color-grey-mid);
+      margin-bottom: 32px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--color-grey-mid);
+    }
+    .ds-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+      align-items: flex-start;
+    }
+    .ds-swatch {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .ds-swatch__block {
+      width: 120px;
+      height: 120px;
+      border-radius: 12px;
+    }
+    .ds-swatch__name {
+      font-family: var(--font-body);
+      font-size: 12px;
+      color: var(--color-black);
+    }
+    .ds-swatch__hex {
+      font-family: var(--font-body);
+      font-size: 11px;
+      color: rgba(17,17,17,0.45);
+    }
+    .ds-type-row {
+      display: flex;
+      align-items: baseline;
+      gap: 40px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--color-grey-mid);
+    }
+    .ds-type-row:last-child { border-bottom: none; }
+    .ds-type-label {
+      font-family: var(--font-body);
+      font-size: 11px;
+      color: rgba(17,17,17,0.45);
+      min-width: 180px;
+    }
+    .ds-btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+    .ds-btn-row { display: flex; gap: 16px; align-items: center; }
+    .ds-size-label {
+      font-family: var(--font-body);
+      font-size: 11px;
+      color: rgba(17,17,17,0.45);
+      min-width: 48px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── COLOURS ─────────────────────────────────────── -->
+  <section class="ds-section">
+    <p class="ds-section__label">Colours</p>
+    <div class="ds-row">
+
+      <div class="ds-swatch">
+        <div class="ds-swatch__block" style="background:var(--color-red)"></div>
+        <span class="ds-swatch__name">Red</span>
+        <span class="ds-swatch__hex">#e31b3b</span>
+      </div>
+
+      <div class="ds-swatch">
+        <div class="ds-swatch__block" style="background:var(--color-black)"></div>
+        <span class="ds-swatch__name">Black</span>
+        <span class="ds-swatch__hex">#111111</span>
+      </div>
+
+      <div class="ds-swatch">
+        <div class="ds-swatch__block" style="background:var(--color-white);border:1px solid var(--color-grey-mid)"></div>
+        <span class="ds-swatch__name">White</span>
+        <span class="ds-swatch__hex">#ffffff</span>
+      </div>
+
+      <div class="ds-swatch">
+        <div class="ds-swatch__block" style="background:var(--color-grey-dark)"></div>
+        <span class="ds-swatch__name">Grey Dark</span>
+        <span class="ds-swatch__hex">#6b6b6b</span>
+      </div>
+
+      <div class="ds-swatch">
+        <div class="ds-swatch__block" style="background:var(--color-grey-light);border:1px solid var(--color-grey-mid)"></div>
+        <span class="ds-swatch__name">Grey Light</span>
+        <span class="ds-swatch__hex">#f3f3f3</span>
+      </div>
+
+      <div class="ds-swatch">
+        <div class="ds-swatch__block" style="background:var(--color-grey-mid)"></div>
+        <span class="ds-swatch__name">Grey Mid</span>
+        <span class="ds-swatch__hex">#dcdce1</span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── TYPOGRAPHY ──────────────────────────────────── -->
+  <section class="ds-section">
+    <p class="ds-section__label">Typography</p>
+
+    <div class="ds-type-row">
+      <span class="ds-type-label">Display LG · Pano · 32px</span>
+      <span class="text-display-lg">Display Large</span>
+    </div>
+    <div class="ds-type-row">
+      <span class="ds-type-label">Display MD · Pano · 24px</span>
+      <span class="text-display-md">Display Medium</span>
+    </div>
+    <div class="ds-type-row">
+      <span class="ds-type-label">Display SM · Pano · 16px</span>
+      <span class="text-display-sm">Display Small</span>
+    </div>
+    <div class="ds-type-row">
+      <span class="ds-type-label">Body LG · KH Teka · 18px</span>
+      <span class="text-body-lg">The quick brown fox jumps over the lazy dog</span>
+    </div>
+    <div class="ds-type-row">
+      <span class="ds-type-label">Body MD · KH Teka · 14px</span>
+      <span class="text-body-md">The quick brown fox jumps over the lazy dog</span>
+    </div>
+    <div class="ds-type-row">
+      <span class="ds-type-label">Body SM · KH Teka · 12px</span>
+      <span class="text-body-sm">The quick brown fox jumps over the lazy dog</span>
+    </div>
+  </section>
+
+  <!-- ── BUTTONS ─────────────────────────────────────── -->
+  <section class="ds-section">
+    <p class="ds-section__label">Buttons</p>
+    <div class="ds-btn-group">
+
+      <div class="ds-btn-row">
+        <span class="ds-size-label">Large</span>
+        <button class="btn btn-primary btn--lg">Primary</button>
+        <button class="btn btn-outline-white btn--lg">White</button>
+        <button class="btn btn-outline-black btn--lg">Black</button>
+        <button class="btn btn-tertiary btn--lg">Tertiary</button>
+      </div>
+
+      <div class="ds-btn-row">
+        <span class="ds-size-label">Small</span>
+        <button class="btn btn-primary btn--sm">Primary</button>
+        <button class="btn btn-outline-white btn--sm">White</button>
+        <button class="btn btn-outline-black btn--sm">Black</button>
+        <button class="btn btn-tertiary btn--sm">Tertiary</button>
+      </div>
+
+      <div class="ds-btn-row" style="background:var(--color-black);padding:16px;border-radius:12px">
+        <span class="ds-size-label" style="color:rgba(255,255,255,0.5)">On dark</span>
+        <button class="btn btn-primary btn--sm">Primary</button>
+        <button class="btn btn-outline-black-inv btn--sm">Black Inv</button>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── CARDS ───────────────────────────────────────── -->
+  <section class="ds-section">
+    <p class="ds-section__label">Cards</p>
+    <div class="ds-row">
+
+      <!-- White / Button=True -->
+      <div class="card card--white">
+        <h3 class="card__title">Card Title</h3>
+        <p class="card__subtitle">Short description that sits below the title.</p>
+        <button class="btn btn-primary btn--sm">Get started</button>
+      </div>
+
+      <!-- Black / Button=True -->
+      <div class="card card--black">
+        <h3 class="card__title">Card Title</h3>
+        <p class="card__subtitle">Short description that sits below the title.</p>
+        <button class="btn btn-primary btn--sm">Get started</button>
+      </div>
+
+      <!-- White / Button=False -->
+      <div class="card card--white">
+        <h3 class="card__title">Card Title</h3>
+        <p class="card__subtitle">Short description that sits below the title.</p>
+      </div>
+
+      <!-- Black / Button=False -->
+      <div class="card card--black">
+        <h3 class="card__title">Card Title</h3>
+        <p class="card__subtitle">Short description that sits below the title.</p>
+      </div>
+
+    </div>
+  </section>
+
+</body>
+</html>
