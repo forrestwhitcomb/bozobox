@@ -117,25 +117,36 @@ export default function Canvas({ state, dispatch }: Props) {
         const children: ChildOffset[] = []
 
         if (hit.type === 'text') {
-          // Text clicked — check if it's inside a parent shape (button/card)
-          const parent = findParentShape(state, hit)
-          if (parent) {
-            moveTarget = parent
-            // Gather all text inside the parent as children
+          // Text clicked — only buttons own text, not cards
+          const parentBtn = findParentButton(state, hit)
+          if (parentBtn) {
+            moveTarget = parentBtn
+            // Gather all text inside this button as children
             for (const cid of state.order) {
               const c = state.shapes[cid]
-              if (!c || c.id === parent.id || c.type !== 'text') continue
-              if (isContained(c, parent)) {
+              if (!c || c.id === parentBtn.id || c.type !== 'text') continue
+              if (isContained(c, parentBtn)) {
                 children.push({ id: c.id, offsetX: x - c.x, offsetY: y - c.y })
               }
             }
           }
-        } else {
-          // Non-text shape — find contained text children
+          // else: standalone text — moveTarget stays as the text itself
+        } else if (hit.type === 'rounded-rect') {
+          // Button — gather contained text as children
           for (const cid of state.order) {
             const c = state.shapes[cid]
             if (!c || c.id === hit.id || c.type !== 'text') continue
             if (isContained(c, hit)) {
+              children.push({ id: c.id, offsetX: x - c.x, offsetY: y - c.y })
+            }
+          }
+        } else {
+          // Card/rect — gather contained text, but skip text owned by a button
+          for (const cid of state.order) {
+            const c = state.shapes[cid]
+            if (!c || c.id === hit.id || c.type !== 'text') continue
+            if (isContained(c, hit)) {
+              if (findParentButton(state, c)) continue  // belongs to a button, skip
               children.push({ id: c.id, offsetX: x - c.x, offsetY: y - c.y })
             }
           }
@@ -476,13 +487,19 @@ function isContained(text: ShapeNode, parent: ShapeNode): boolean {
     tb.right <= parent.x + parent.width && tb.bottom <= parent.y + parent.height
 }
 
-function findParentShape(state: CanvasState, text: ShapeNode): ShapeNode | null {
+/** Only buttons (rounded-rect) own text. Returns the smallest containing button. */
+function findParentButton(state: CanvasState, text: ShapeNode): ShapeNode | null {
+  let best: ShapeNode | null = null
+  let bestArea = Infinity
   for (const id of state.order) {
     const s = state.shapes[id]
-    if (!s || s.type === 'text') continue
-    if (isContained(text, s)) return s
+    if (!s || s.type !== 'rounded-rect') continue
+    if (isContained(text, s)) {
+      const area = s.width * s.height
+      if (area < bestArea) { best = s; bestArea = area }
+    }
   }
-  return null
+  return best
 }
 
 function hitHandle(s: ShapeNode, x: number, y: number): string | null {
