@@ -1,7 +1,8 @@
-import type { TranslatedComponent } from '../model/types'
+import { useState } from 'react'
+import type { TranslatedComponent, TranslatedScreen } from '../model/types'
 
 interface Props {
-  components: TranslatedComponent[]
+  screens: TranslatedScreen[]
 }
 
 // Native iPhone 14 Pro content dimensions
@@ -40,9 +41,29 @@ const ISLAND_Y = Math.round(FIGMA_ISLAND_Y * SCALE)
 // Scale phone content to fit screen
 const CONTENT_SCALE = SCREEN_W / PHONE_W
 
-export default function PhonePreview({ components }: Props) {
+export default function PhonePreview({ screens }: Props) {
+  const [currentScreen, setCurrentScreen] = useState(0)
+
+  // Clamp screen index to valid range
+  const screenCount = screens.length
+  const safeIndex = screenCount === 0 ? 0 : Math.min(currentScreen, screenCount - 1)
+  const components = screens[safeIndex]?.components ?? []
+
   return (
     <div className="phone-panel">
+      {/* Left arrow */}
+      {screenCount > 1 && (
+        <button
+          className="screen-nav screen-nav--left"
+          onClick={() => setCurrentScreen(Math.max(0, safeIndex - 1))}
+          disabled={safeIndex === 0}
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M12 4L6 10L12 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
+      )}
+
       <div
         className="iphone-body"
         style={{ width: BODY_W, height: BODY_H, borderWidth: BORDER, borderRadius: RADIUS }}
@@ -88,7 +109,7 @@ export default function PhonePreview({ components }: Props) {
               transformOrigin: 'top left',
             }}
           >
-            {components.length === 0 && (
+            {screens.length === 0 && (
               <div className="phone-empty">
                 <p>Draw shapes on the canvas</p>
                 <p className="phone-empty-sub">They'll appear here as components</p>
@@ -99,7 +120,33 @@ export default function PhonePreview({ components }: Props) {
             ))}
           </div>
         </div>
+
+        {/* Screen indicator dots */}
+        {screenCount > 1 && (
+          <div className="screen-dots">
+            {screens.map((_, i) => (
+              <div
+                key={i}
+                className={`screen-dot${i === safeIndex ? ' active' : ''}`}
+                onClick={() => setCurrentScreen(i)}
+              />
+            ))}
+          </div>
+        )}
       </div>
+
+      {/* Right arrow */}
+      {screenCount > 1 && (
+        <button
+          className="screen-nav screen-nav--right"
+          onClick={() => setCurrentScreen(Math.min(screenCount - 1, safeIndex + 1))}
+          disabled={safeIndex === screenCount - 1}
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M8 4L14 10L8 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
+      )}
     </div>
   )
 }

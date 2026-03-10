@@ -41,3 +41,9 @@ export interface TranslatedComponent {
   textClass?: string
   fill?: string
 }
+
+export interface TranslatedScreen {
+  index: number
+  components: TranslatedComponent[]
+  canvasXRange: [number, number]  // min-max x on canvas for this screen
+}

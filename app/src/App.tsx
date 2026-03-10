@@ -9,7 +9,7 @@ import PhonePreview from './preview/PhonePreview'
 export default function App() {
   const [state, dispatch] = useReducer(reducer, initialState)
 
-  const components = useMemo(() => translate(state), [state.shapes, state.order])
+  const screens = useMemo(() => translate(state), [state.shapes, state.order])
 
   // Expose dispatch for dev testing
   useEffect(() => { (window as any).__dispatch = dispatch }, [dispatch])
@@ -32,7 +32,7 @@ export default function App() {
         </section>
 
         <section className="preview-panel">
-          <PhonePreview components={components} />
+          <PhonePreview screens={screens} />
         </section>
 
         <aside className="inspector-panel">

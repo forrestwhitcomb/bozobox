@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useState } from 'react'
+import React, { useRef, useCallback, useState, useEffect } from 'react'
 import type { CanvasState, ShapeNode } from '../model/types'
 import type { Action } from '../model/reducer'
 
@@ -7,10 +7,12 @@ interface Props {
   dispatch: React.Dispatch<Action>
 }
 
-const CANVAS_W = 800
-const CANVAS_H = 600
+const DEFAULT_W = 800
+const DEFAULT_H = 600
 const MIN_SIZE = 8
 const HANDLE_SIZE = 8
+const MIN_ZOOM = 0.2  // zoomed out: see 5x the default area
+const MAX_ZOOM = 4     // zoomed in: see 1/4 the default area
 
 type ChildOffset = { id: string; offsetX: number; offsetY: number }
 
@@ -19,26 +21,79 @@ type DragState =
   | { kind: 'draw'; startX: number; startY: number; curX: number; curY: number }
   | { kind: 'move'; id: string; offsetX: number; offsetY: number; children: ChildOffset[] }
   | { kind: 'resize'; id: string; handle: string; origShape: ShapeNode; startX: number; startY: number }
+  | { kind: 'pan'; lastX: number; lastY: number }
+
+interface ViewBox { x: number; y: number; w: number; h: number }
 
 export default function Canvas({ state, dispatch }: Props) {
   const svgRef = useRef<SVGSVGElement>(null)
   const [drag, setDrag] = useState<DragState>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const [vb, setVb] = useState<ViewBox>({ x: 0, y: 0, w: DEFAULT_W, h: DEFAULT_H })
+
+  const zoom = DEFAULT_W / vb.w  // >1 = zoomed in, <1 = zoomed out
 
   const toSvg = useCallback((clientX: number, clientY: number) => {
     const svg = svgRef.current
     if (!svg) return { x: 0, y: 0 }
     const rect = svg.getBoundingClientRect()
-    const scaleX = CANVAS_W / rect.width
-    const scaleY = CANVAS_H / rect.height
     return {
-      x: Math.round((clientX - rect.left) * scaleX),
-      y: Math.round((clientY - rect.top) * scaleY),
+      x: Math.round(vb.x + ((clientX - rect.left) / rect.width) * vb.w),
+      y: Math.round(vb.y + ((clientY - rect.top) / rect.height) * vb.h),
     }
+  }, [vb])
+
+  // Wheel: pinch-to-zoom or scroll-to-pan (native listener for passive: false)
+  useEffect(() => {
+    const svg = svgRef.current
+    if (!svg) return
+    const handler = (e: WheelEvent) => {
+      e.preventDefault()
+      const rect = svg.getBoundingClientRect()
+
+      if (e.ctrlKey || e.metaKey) {
+        // Zoom — pinch or ctrl+scroll
+        const cursorFracX = (e.clientX - rect.left) / rect.width
+        const cursorFracY = (e.clientY - rect.top) / rect.height
+        const factor = e.deltaY > 0 ? 0.97 : 1.03
+
+        setVb(prev => {
+          const prevZoom = DEFAULT_W / prev.w
+          const newZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, prevZoom * factor))
+          const newW = DEFAULT_W / newZoom
+          const newH = DEFAULT_H / newZoom
+          return {
+            x: prev.x + (prev.w - newW) * cursorFracX,
+            y: prev.y + (prev.h - newH) * cursorFracY,
+            w: newW,
+            h: newH,
+          }
+        })
+      } else {
+        // Pan — regular scroll / two-finger swipe
+        setVb(prev => {
+          const prevZoom = DEFAULT_W / prev.w
+          const panSpeed = 1 / prevZoom
+          return {
+            ...prev,
+            x: prev.x + e.deltaX * panSpeed,
+            y: prev.y + e.deltaY * panSpeed,
+          }
+        })
+      }
+    }
+    svg.addEventListener('wheel', handler, { passive: false })
+    return () => svg.removeEventListener('wheel', handler)
   }, [])
 
   const onPointerDown = useCallback((e: React.PointerEvent) => {
+    // Middle mouse button or space+click for panning
+    if (e.button === 1) {
+      setDrag({ kind: 'pan', lastX: e.clientX, lastY: e.clientY })
+      try { (e.target as Element).setPointerCapture(e.pointerId) } catch {}
+      return
+    }
     if (e.button !== 0) return
     const { x, y } = toSvg(e.clientX, e.clientY)
     const tool = state.activeTool
@@ -100,6 +155,23 @@ export default function Canvas({ state, dispatch }: Props) {
 
   const onPointerMove = useCallback((e: React.PointerEvent) => {
     if (!drag) return
+
+    if (drag.kind === 'pan') {
+      const dx = e.clientX - drag.lastX
+      const dy = e.clientY - drag.lastY
+      const svg = svgRef.current
+      if (svg) {
+        const rect = svg.getBoundingClientRect()
+        setVb(prev => ({
+          ...prev,
+          x: prev.x - (dx / rect.width) * prev.w,
+          y: prev.y - (dy / rect.height) * prev.h,
+        }))
+      }
+      setDrag({ kind: 'pan', lastX: e.clientX, lastY: e.clientY })
+      return
+    }
+
     const { x, y } = toSvg(e.clientX, e.clientY)
 
     if (drag.kind === 'draw') {
@@ -223,11 +295,21 @@ export default function Canvas({ state, dispatch }: Props) {
 
   const selected = state.selectedId ? state.shapes[state.selectedId] : null
 
+  const resetZoom = useCallback(() => {
+    setVb({ x: 0, y: 0, w: DEFAULT_W, h: DEFAULT_H })
+  }, [])
+
+  // Compute grid extent — cover visible area with generous margin
+  const gridX = Math.floor(vb.x / 40) * 40 - 40
+  const gridY = Math.floor(vb.y / 40) * 40 - 40
+  const gridW = Math.ceil(vb.w / 40) * 40 + 120
+  const gridH = Math.ceil(vb.h / 40) * 40 + 120
+
   return (
     <div className="canvas-wrap" style={{ position: 'relative' }}>
       <svg
         ref={svgRef}
-        viewBox={`0 0 ${CANVAS_W} ${CANVAS_H}`}
+        viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`}
         className="canvas-svg"
         tabIndex={0}
         onPointerDown={onPointerDown}
@@ -236,14 +318,14 @@ export default function Canvas({ state, dispatch }: Props) {
         onDoubleClick={onDoubleClick}
         onKeyDown={onKeyDown}
       >
-        {/* Grid */}
+        {/* Infinite grid background */}
         <defs>
           <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#e0e0e4" strokeWidth="0.5" />
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#e0e0e4" strokeWidth={0.5 / Math.min(zoom, 1)} />
           </pattern>
         </defs>
-        <rect width={CANVAS_W} height={CANVAS_H} fill="#fafafc" />
-        <rect width={CANVAS_W} height={CANVAS_H} fill="url(#grid)" />
+        <rect x={gridX} y={gridY} width={gridW} height={gridH} fill="#fafafc" />
+        <rect x={gridX} y={gridY} width={gridW} height={gridH} fill="url(#grid)" />
 
         {/* Shapes */}
         {state.order.map(id => {
@@ -273,38 +355,42 @@ export default function Canvas({ state, dispatch }: Props) {
               rx={s.cornerRadius === 9999 ? Math.min(s.width, s.height) / 2 : s.cornerRadius}
               fill={s.fill}
               stroke={s.fill === '#ffffff' ? '#dcdce1' : 'none'}
-              strokeWidth={s.fill === '#ffffff' ? 1 : 0}
+              strokeWidth={s.fill === '#ffffff' ? 1 / zoom : 0}
               style={{ cursor: state.activeTool === 'select' ? 'move' : 'crosshair' }}
             />
           )
         })}
 
         {/* Selection outline + handles */}
-        {selected && selected.type !== 'text' && (
-          <>
-            <rect
-              x={selected.x} y={selected.y}
-              width={selected.width} height={selected.height}
-              rx={selected.cornerRadius === 9999 ? Math.min(selected.width, selected.height) / 2 : selected.cornerRadius}
-              fill="none" stroke="#2196f3" strokeWidth="2" strokeDasharray="6 3"
-            />
-            {getHandles(selected).map(h => (
+        {selected && selected.type !== 'text' && (() => {
+          const hs = HANDLE_SIZE / zoom  // scale handles to stay same screen size
+          const sw = 2 / zoom
+          return (
+            <>
               <rect
-                key={h.pos}
-                x={h.x - HANDLE_SIZE / 2} y={h.y - HANDLE_SIZE / 2}
-                width={HANDLE_SIZE} height={HANDLE_SIZE}
-                fill="#fff" stroke="#2196f3" strokeWidth="1.5"
-                style={{ cursor: h.cursor }}
+                x={selected.x} y={selected.y}
+                width={selected.width} height={selected.height}
+                rx={selected.cornerRadius === 9999 ? Math.min(selected.width, selected.height) / 2 : selected.cornerRadius}
+                fill="none" stroke="#2196f3" strokeWidth={sw} strokeDasharray={`${6/zoom} ${3/zoom}`}
               />
-            ))}
-          </>
-        )}
+              {getHandles(selected).map(h => (
+                <rect
+                  key={h.pos}
+                  x={h.x - hs / 2} y={h.y - hs / 2}
+                  width={hs} height={hs}
+                  fill="#fff" stroke="#2196f3" strokeWidth={1.5 / zoom}
+                  style={{ cursor: h.cursor }}
+                />
+              ))}
+            </>
+          )
+        })()}
         {selected && selected.type === 'text' && (
           <rect
-            x={selected.x - 4} y={selected.y - 2}
-            width={(selected.text?.length ?? 4) * (selected.fontSize ?? 16) * 0.6 + 8}
-            height={(selected.fontSize ?? 16) + 8}
-            fill="none" stroke="#2196f3" strokeWidth="1.5" strokeDasharray="4 2"
+            x={selected.x - 4 / zoom} y={selected.y - 2 / zoom}
+            width={(selected.text?.length ?? 4) * (selected.fontSize ?? 16) * 0.6 + 8 / zoom}
+            height={(selected.fontSize ?? 16) + 8 / zoom}
+            fill="none" stroke="#2196f3" strokeWidth={1.5 / zoom} strokeDasharray={`${4/zoom} ${2/zoom}`}
           />
         )}
 
@@ -319,7 +405,7 @@ export default function Canvas({ state, dispatch }: Props) {
             <rect
               x={x1} y={y1} width={w} height={h}
               rx={isRounded ? Math.min(w, h) / 2 : 0}
-              fill="none" stroke="#2196f3" strokeWidth="1.5" strokeDasharray="4 2"
+              fill="none" stroke="#2196f3" strokeWidth={1.5 / zoom} strokeDasharray={`${4/zoom} ${2/zoom}`}
             />
           )
         })()}
@@ -331,8 +417,7 @@ export default function Canvas({ state, dispatch }: Props) {
         const svg = svgRef.current
         if (!svg) return null
         const rect = svg.getBoundingClientRect()
-        const scaleX = rect.width / CANVAS_W
-        const scaleY = rect.height / CANVAS_H
+        const pxPerUnit = rect.width / vb.w
         return (
           <input
             ref={inputRef}
@@ -340,9 +425,9 @@ export default function Canvas({ state, dispatch }: Props) {
             defaultValue={s.text ?? ''}
             style={{
               position: 'absolute',
-              left: s.x * scaleX,
-              top: s.y * scaleY,
-              fontSize: (s.fontSize ?? 16) * scaleX,
+              left: (s.x - vb.x) * pxPerUnit,
+              top: (s.y - vb.y) * pxPerUnit,
+              fontSize: (s.fontSize ?? 16) * pxPerUnit,
               color: s.fill,
               fontFamily: "'KH Teka', 'Inter', sans-serif",
             }}
@@ -351,6 +436,13 @@ export default function Canvas({ state, dispatch }: Props) {
           />
         )
       })()}
+
+      {/* Zoom indicator */}
+      {Math.abs(zoom - 1) > 0.01 && (
+        <button className="zoom-badge" onClick={resetZoom} title="Reset zoom">
+          {Math.round(zoom * 100)}%
+        </button>
+      )}
     </div>
   )
 }

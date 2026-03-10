@@ -4,6 +4,7 @@ export type Action =
   | { type: 'ADD_SHAPE'; shape: ShapeNode }
   | { type: 'SELECT'; id: string | null }
   | { type: 'MOVE'; id: string; x: number; y: number }
+  | { type: 'MOVE_GROUP'; moves: Array<{ id: string; x: number; y: number }> }
   | { type: 'RESIZE'; id: string; width: number; height: number; x?: number; y?: number }
   | { type: 'RECOLOR'; id: string; fill: string }
   | { type: 'UPDATE_TEXT'; id: string; text: string }
@@ -38,6 +39,15 @@ export function reducer(state: CanvasState, action: Action): CanvasState {
         ...state,
         shapes: { ...state.shapes, [action.id]: { ...shape, x: action.x, y: action.y } },
       }
+    }
+
+    case 'MOVE_GROUP': {
+      const updated = { ...state.shapes }
+      for (const m of action.moves) {
+        const s = updated[m.id]
+        if (s) updated[m.id] = { ...s, x: m.x, y: m.y }
+      }
+      return { ...state, shapes: updated }
     }
 
     case 'RESIZE': {

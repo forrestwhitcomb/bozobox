@@ -53,17 +53,16 @@ body {
   position: relative;
   background: var(--canvas-bg);
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
+  align-items: stretch;
+  justify-content: stretch;
+  padding: 0;
   overflow: hidden;
 }
 
 .canvas-wrap {
   position: relative;
   width: 100%;
-  max-width: 800px;
-  aspect-ratio: 800 / 600;
+  height: 100%;
   border-radius: 4px;
   overflow: hidden;
 }
@@ -83,6 +82,24 @@ body {
   min-width: 60px;
 }
 
+.zoom-badge {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  z-index: 20;
+  backdrop-filter: blur(4px);
+  transition: background 0.15s;
+}
+.zoom-badge:hover { background: rgba(0,0,0,0.8); }
+
 /* ── Preview Panel ────────────────────────────────────── */
 .preview-panel {
   background: var(--canvas-bg);
@@ -97,7 +114,43 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 12px;
 }
+
+/* ── Screen Navigation ───────────────────────────────── */
+.screen-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0,0,0,0.08);
+  color: #555;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.screen-nav:hover:not(:disabled) { background: rgba(0,0,0,0.14); color: #222; }
+.screen-nav:disabled { opacity: 0.25; cursor: default; }
+
+.screen-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 0 2px;
+}
+.screen-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.15);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.screen-dot.active { background: var(--chrome-active); }
+.screen-dot:hover:not(.active) { background: rgba(0,0,0,0.3); }
 
 /* ── iPhone Frame (CSS-based, matches Figma reference) ── */
 .iphone-body {
