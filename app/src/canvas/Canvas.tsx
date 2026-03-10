@@ -12,10 +12,12 @@ const CANVAS_H = 600
 const MIN_SIZE = 8
 const HANDLE_SIZE = 8
 
+type ChildOffset = { id: string; offsetX: number; offsetY: number }
+
 type DragState =
   | null
   | { kind: 'draw'; startX: number; startY: number; curX: number; curY: number }
-  | { kind: 'move'; id: string; offsetX: number; offsetY: number }
+  | { kind: 'move'; id: string; offsetX: number; offsetY: number; children: ChildOffset[] }
   | { kind: 'resize'; id: string; handle: string; origShape: ShapeNode; startX: number; startY: number }
 
 export default function Canvas({ state, dispatch }: Props) {
@@ -55,8 +57,37 @@ export default function Canvas({ state, dispatch }: Props) {
       // Check if clicking a shape
       const hit = hitTest(state, x, y)
       if (hit) {
-        dispatch({ type: 'SELECT', id: hit.id })
-        setDrag({ kind: 'move', id: hit.id, offsetX: x - hit.x, offsetY: y - hit.y })
+        // Determine the move target and its children
+        let moveTarget = hit
+        const children: ChildOffset[] = []
+
+        if (hit.type === 'text') {
+          // Text clicked — check if it's inside a parent shape (button/card)
+          const parent = findParentShape(state, hit)
+          if (parent) {
+            moveTarget = parent
+            // Gather all text inside the parent as children
+            for (const cid of state.order) {
+              const c = state.shapes[cid]
+              if (!c || c.id === parent.id || c.type !== 'text') continue
+              if (isContained(c, parent)) {
+                children.push({ id: c.id, offsetX: x - c.x, offsetY: y - c.y })
+              }
+            }
+          }
+        } else {
+          // Non-text shape — find contained text children
+          for (const cid of state.order) {
+            const c = state.shapes[cid]
+            if (!c || c.id === hit.id || c.type !== 'text') continue
+            if (isContained(c, hit)) {
+              children.push({ id: c.id, offsetX: x - c.x, offsetY: y - c.y })
+            }
+          }
+        }
+
+        dispatch({ type: 'SELECT', id: moveTarget.id })
+        setDrag({ kind: 'move', id: moveTarget.id, offsetX: x - moveTarget.x, offsetY: y - moveTarget.y, children })
         try { (e.target as Element).setPointerCapture(e.pointerId) } catch {}
       } else {
         dispatch({ type: 'SELECT', id: null })
@@ -74,7 +105,15 @@ export default function Canvas({ state, dispatch }: Props) {
     if (drag.kind === 'draw') {
       setDrag({ ...drag, curX: x, curY: y })
     } else if (drag.kind === 'move') {
-      dispatch({ type: 'MOVE', id: drag.id, x: x - drag.offsetX, y: y - drag.offsetY })
+      if (drag.children.length > 0) {
+        const moves = [
+          { id: drag.id, x: x - drag.offsetX, y: y - drag.offsetY },
+          ...drag.children.map(c => ({ id: c.id, x: x - c.offsetX, y: y - c.offsetY })),
+        ]
+        dispatch({ type: 'MOVE_GROUP', moves })
+      } else {
+        dispatch({ type: 'MOVE', id: drag.id, x: x - drag.offsetX, y: y - drag.offsetY })
+      }
     } else if (drag.kind === 'resize') {
       const { origShape: s, handle, startX, startY } = drag
       const dx = x - startX
@@ -220,6 +259,7 @@ export default function Canvas({ state, dispatch }: Props) {
                 fill={s.fill}
                 fontFamily="'KH Teka', 'Inter', sans-serif"
                 style={{ pointerEvents: 'all', cursor: 'default', userSelect: 'none' }}
+                visibility={editingId === id ? 'hidden' : 'visible'}
               >
                 {s.text ?? ''}
               </text>
@@ -328,6 +368,27 @@ function hitTest(state: CanvasState, x: number, y: number): ShapeNode | null {
     } else {
       if (x >= s.x && x <= s.x + s.width && y >= s.y && y <= s.y + s.height) return s
     }
+  }
+  return null
+}
+
+function textBounds(t: ShapeNode) {
+  const tw = (t.text?.length ?? 4) * (t.fontSize ?? 16) * 0.6
+  const th = (t.fontSize ?? 16) * 1.4
+  return { right: t.x + tw, bottom: t.y + th }
+}
+
+function isContained(text: ShapeNode, parent: ShapeNode): boolean {
+  const tb = textBounds(text)
+  return text.x >= parent.x && text.y >= parent.y &&
+    tb.right <= parent.x + parent.width && tb.bottom <= parent.y + parent.height
+}
+
+function findParentShape(state: CanvasState, text: ShapeNode): ShapeNode | null {
+  for (const id of state.order) {
+    const s = state.shapes[id]
+    if (!s || s.type === 'text') continue
+    if (isContained(text, s)) return s
   }
   return null
 }
