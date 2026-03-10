@@ -99,10 +99,14 @@ export default function Canvas({ state, dispatch }: Props) {
     const tool = state.activeTool
 
     if (tool === 'select') {
+      const svg = svgRef.current!
+      const svgRect = svg.getBoundingClientRect()
+      const pxPerSvg = svgRect.width / vb.w
+
       // Check if clicking a resize handle
       const sel = state.selectedId ? state.shapes[state.selectedId] : null
       if (sel) {
-        const handle = hitHandle(sel, x, y)
+        const handle = hitHandle(sel, x, y, pxPerSvg)
         if (handle) {
           setDrag({ kind: 'resize', id: sel.id, handle, origShape: { ...sel }, startX: x, startY: y })
           try { (e.target as Element).setPointerCapture(e.pointerId) } catch {}
@@ -110,48 +114,9 @@ export default function Canvas({ state, dispatch }: Props) {
         }
       }
       // Check if clicking a shape
-      const hit = hitTest(state, x, y)
+      const hit = hitTest(state, x, y, pxPerSvg)
       if (hit) {
-        // Determine the move target and its children
-        let moveTarget = hit
-        const children: ChildOffset[] = []
-
-        if (hit.type === 'text') {
-          // Text clicked — only buttons own text, not cards
-          const parentBtn = findParentButton(state, hit)
-          if (parentBtn) {
-            moveTarget = parentBtn
-            // Gather all text inside this button as children
-            for (const cid of state.order) {
-              const c = state.shapes[cid]
-              if (!c || c.id === parentBtn.id || c.type !== 'text') continue
-              if (isContained(c, parentBtn)) {
-                children.push({ id: c.id, offsetX: x - c.x, offsetY: y - c.y })
-              }
-            }
-          }
-          // else: standalone text — moveTarget stays as the text itself
-        } else if (hit.type === 'rounded-rect') {
-          // Button — gather contained text as children
-          for (const cid of state.order) {
-            const c = state.shapes[cid]
-            if (!c || c.id === hit.id || c.type !== 'text') continue
-            if (isContained(c, hit)) {
-              children.push({ id: c.id, offsetX: x - c.x, offsetY: y - c.y })
-            }
-          }
-        } else {
-          // Card/rect — gather contained text, but skip text owned by a button
-          for (const cid of state.order) {
-            const c = state.shapes[cid]
-            if (!c || c.id === hit.id || c.type !== 'text') continue
-            if (isContained(c, hit)) {
-              if (findParentButton(state, c)) continue  // belongs to a button, skip
-              children.push({ id: c.id, offsetX: x - c.x, offsetY: y - c.y })
-            }
-          }
-        }
-
+        const { moveTarget, children } = resolveMoveTarget(state, hit, x, y)
         dispatch({ type: 'SELECT', id: moveTarget.id })
         setDrag({ kind: 'move', id: moveTarget.id, offsetX: x - moveTarget.x, offsetY: y - moveTarget.y, children })
         try { (e.target as Element).setPointerCapture(e.pointerId) } catch {}
@@ -234,7 +199,10 @@ export default function Canvas({ state, dispatch }: Props) {
             text: 'Text', fontSize: 16,
           },
         })
-        setTimeout(() => setEditingId(id), 50)
+        setTimeout(() => {
+          setEditingId(id)
+          requestAnimationFrame(() => inputRef.current?.focus())
+        }, 50)
       } else if (w >= MIN_SIZE && h >= MIN_SIZE) {
         const isRounded = tool === 'rounded-rect'
         if (isRounded) {
@@ -281,10 +249,26 @@ export default function Canvas({ state, dispatch }: Props) {
 
   const onDoubleClick = useCallback((e: React.MouseEvent) => {
     const { x, y } = toSvg(e.clientX, e.clientY)
-    const hit = hitTest(state, x, y)
-    if (hit?.type === 'text') {
-      setEditingId(hit.id)
-      dispatch({ type: 'SELECT', id: hit.id })
+    const svg = svgRef.current!
+    const svgRect = svg.getBoundingClientRect()
+    const pxPerSvg = svgRect.width / vb.w
+    const hit = hitTest(state, x, y, pxPerSvg)
+    if (!hit) return
+
+    let textToEdit: ShapeNode | null = null
+    if (hit.type === 'text') {
+      textToEdit = hit
+    } else if (hit.type === 'rounded-rect') {
+      // Double-click on button body → find its text child to edit
+      for (let i = state.order.length - 1; i >= 0; i--) {
+        const c = state.shapes[state.order[i]]
+        if (c?.type === 'text' && isContained(c, hit)) { textToEdit = c; break }
+      }
+    }
+
+    if (textToEdit) {
+      setEditingId(textToEdit.id)
+      dispatch({ type: 'SELECT', id: textToEdit.id })
       setTimeout(() => inputRef.current?.focus(), 50)
     }
   }, [state, dispatch, toSvg])
@@ -460,18 +444,72 @@ export default function Canvas({ state, dispatch }: Props) {
 
 // --- Helpers ---
 
-function hitTest(state: CanvasState, x: number, y: number): ShapeNode | null {
+// Hit test with type priority: text (with padding) > rounded-rect > rect.
+// This ensures small/nested elements always win over large background shapes
+// regardless of z-order.
+function textCenter(s: ShapeNode): { cx: number; cy: number } {
+  const tw = (s.text?.length ?? 4) * (s.fontSize ?? 16) * 0.6
+  const th = (s.fontSize ?? 16) * 1.4
+  return { cx: s.x + tw / 2, cy: s.y + th / 2 }
+}
+
+// pxPerSvg = how many screen pixels per SVG unit (accounts for element size + zoom)
+function hitTest(state: CanvasState, x: number, y: number, pxPerSvg: number): ShapeNode | null {
+  // All padding expressed in screen pixels, converted to SVG units
+  const TEXT_PAD = 22 / pxPerSvg    // 22 screen px around text
+  const BTN_PAD_PX = 12 / pxPerSvg  // 12 screen px around buttons
+  const RECT_INSET = 14 / pxPerSvg  // 14 screen px inset on cards
+
+  const textHits: ShapeNode[] = []
+  const buttonHits: ShapeNode[] = []
+  const rectHits: ShapeNode[] = []
+
   for (let i = state.order.length - 1; i >= 0; i--) {
     const s = state.shapes[state.order[i]]
     if (!s) continue
     if (s.type === 'text') {
       const tw = (s.text?.length ?? 4) * (s.fontSize ?? 16) * 0.6
       const th = (s.fontSize ?? 16) * 1.4
-      if (x >= s.x && x <= s.x + tw && y >= s.y && y <= s.y + th) return s
+      if (x >= s.x - TEXT_PAD && x <= s.x + tw + TEXT_PAD &&
+          y >= s.y - TEXT_PAD && y <= s.y + th + TEXT_PAD) {
+        textHits.push(s)
+      }
+    } else if (s.type === 'rounded-rect') {
+      if (x >= s.x - BTN_PAD_PX && x <= s.x + s.width + BTN_PAD_PX &&
+          y >= s.y - BTN_PAD_PX && y <= s.y + s.height + BTN_PAD_PX) {
+        buttonHits.push(s)
+      }
     } else {
-      if (x >= s.x && x <= s.x + s.width && y >= s.y && y <= s.y + s.height) return s
+      // Cards use inset — must click well inside the border, not at the edge
+      const inset = Math.min(RECT_INSET, s.width * 0.15, s.height * 0.15)
+      if (x >= s.x + inset && x <= s.x + s.width - inset &&
+          y >= s.y + inset && y <= s.y + s.height - inset) {
+        rectHits.push(s)
+      }
     }
   }
+
+  // Priority: text > button > rect.
+  // When multiple texts match (overlapping padded zones), pick the closest by center distance.
+  if (textHits.length === 1) return textHits[0]
+  if (textHits.length > 1) {
+    let best = textHits[0]
+    let bestDist = Infinity
+    for (const t of textHits) {
+      const { cx, cy } = textCenter(t)
+      const d = (x - cx) ** 2 + (y - cy) ** 2
+      if (d < bestDist) { best = t; bestDist = d }
+    }
+    return best
+  }
+  // When multiple buttons match, pick the smallest (most specific).
+  if (buttonHits.length === 1) return buttonHits[0]
+  if (buttonHits.length > 1) {
+    return buttonHits.reduce((best, s) =>
+      s.width * s.height < best.width * best.height ? s : best
+    )
+  }
+  if (rectHits.length > 0) return rectHits[0]
   return null
 }
 
@@ -485,6 +523,45 @@ function isContained(text: ShapeNode, parent: ShapeNode): boolean {
   const tb = textBounds(text)
   return text.x >= parent.x && text.y >= parent.y &&
     tb.right <= parent.x + parent.width && tb.bottom <= parent.y + parent.height
+}
+
+/** Resolve which shape to move and gather its children offsets. */
+function resolveMoveTarget(state: CanvasState, hit: ShapeNode, x: number, y: number): { moveTarget: ShapeNode; children: ChildOffset[] } {
+  let moveTarget = hit
+  const children: ChildOffset[] = []
+
+  if (hit.type === 'text') {
+    const parentBtn = findParentButton(state, hit)
+    if (parentBtn) {
+      moveTarget = parentBtn
+      for (const cid of state.order) {
+        const c = state.shapes[cid]
+        if (!c || c.id === parentBtn.id || c.type !== 'text') continue
+        if (isContained(c, parentBtn)) {
+          children.push({ id: c.id, offsetX: x - c.x, offsetY: y - c.y })
+        }
+      }
+    }
+  } else if (hit.type === 'rounded-rect') {
+    for (const cid of state.order) {
+      const c = state.shapes[cid]
+      if (!c || c.id === hit.id || c.type !== 'text') continue
+      if (isContained(c, hit)) {
+        children.push({ id: c.id, offsetX: x - c.x, offsetY: y - c.y })
+      }
+    }
+  } else {
+    for (const cid of state.order) {
+      const c = state.shapes[cid]
+      if (!c || c.id === hit.id || c.type !== 'text') continue
+      if (isContained(c, hit)) {
+        if (findParentButton(state, c)) continue
+        children.push({ id: c.id, offsetX: x - c.x, offsetY: y - c.y })
+      }
+    }
+  }
+
+  return { moveTarget, children }
 }
 
 /** Only buttons (rounded-rect) own text. Returns the smallest containing button. */
@@ -502,10 +579,11 @@ function findParentButton(state: CanvasState, text: ShapeNode): ShapeNode | null
   return best
 }
 
-function hitHandle(s: ShapeNode, x: number, y: number): string | null {
+function hitHandle(s: ShapeNode, x: number, y: number, pxPerSvg: number): string | null {
+  const tol = 8 / pxPerSvg  // 8 screen pixels
   const handles = getHandles(s)
   for (const h of handles) {
-    if (Math.abs(x - h.x) <= 6 && Math.abs(y - h.y) <= 6) return h.pos
+    if (Math.abs(x - h.x) <= tol && Math.abs(y - h.y) <= tol) return h.pos
   }
   return null
 }
